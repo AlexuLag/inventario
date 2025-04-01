@@ -1,7 +1,7 @@
-import React from 'react';
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Box,
-  Button,
   Container,
   Typography,
   Paper,
@@ -10,22 +10,24 @@ import {
   ListItemButton,
   ListItemText,
   Divider,
-} from '@mui/material';
+} from '@mui/material'
 
-interface MenuProps {
-  onLogout: () => void;
-}
+const Menu = () => {
+  const navigate = useNavigate()
 
-const Menu: React.FC<MenuProps> = ({ onLogout }) => {
   const handleInventory = () => {
-    // TODO: Implementar navegación al inventario
-    console.log('Ver inventario');
-  };
+    navigate('/products')
+  }
 
   const handleInvoice = () => {
     // TODO: Implementar navegación a crear factura
-    console.log('Crear factura');
-  };
+    console.log('Crear factura')
+  }
+
+  const handleLogout = () => {
+    // TODO: Implementar limpieza de estado/sesión si es necesario
+    navigate('/register')
+  }
 
   return (
     <Container maxWidth="sm">
@@ -49,7 +51,7 @@ const Menu: React.FC<MenuProps> = ({ onLogout }) => {
             </ListItem>
             <Divider />
             <ListItem disablePadding>
-              <ListItemButton onClick={onLogout}>
+              <ListItemButton onClick={handleLogout}>
                 <ListItemText primary="Salir" />
               </ListItemButton>
             </ListItem>
@@ -57,7 +59,7 @@ const Menu: React.FC<MenuProps> = ({ onLogout }) => {
         </Paper>
       </Box>
     </Container>
-  );
-};
+  )
+}
 
-export default Menu; 
+export default Menu 
