@@ -33,6 +33,12 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate required fields
+	if req.Name == "" || req.Code == "" {
+		http.Error(w, "Name and code are required fields", http.StatusBadRequest)
+		return
+	}
+
 	product, err := h.productUseCase.CreateProduct(req.Name, req.Code, req.ImageURL)
 	if err != nil {
 		switch e := err.(type) {
@@ -45,11 +51,17 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(product)
 }
 
 func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
+	rctx := chi.RouteContext(r.Context())
+	if rctx == nil {
+		http.Error(w, "Invalid request context", http.StatusBadRequest)
+		return
+	}
+	idStr := rctx.URLParam("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid product ID", http.StatusBadRequest)
@@ -68,22 +80,29 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(product)
 }
 
 func (h *ProductHandler) GetAllProducts(w http.ResponseWriter, r *http.Request) {
 	products, err := h.productUseCase.GetAllProducts()
 	if err != nil {
-		http.Error(w, "Error fetching products", http.StatusInternalServerError)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(products)
 }
 
 func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
+	rctx := chi.RouteContext(r.Context())
+	if rctx == nil {
+		http.Error(w, "Invalid request context", http.StatusBadRequest)
+		return
+	}
+	idStr := rctx.URLParam("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid product ID", http.StatusBadRequest)
@@ -93,6 +112,12 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	var product domain.Product
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate required fields
+	if product.Name == "" || product.Code == "" {
+		http.Error(w, "Name and code are required fields", http.StatusBadRequest)
 		return
 	}
 
@@ -108,11 +133,17 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(product)
 }
 
 func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
+	rctx := chi.RouteContext(r.Context())
+	if rctx == nil {
+		http.Error(w, "Invalid request context", http.StatusBadRequest)
+		return
+	}
+	idStr := rctx.URLParam("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid product ID", http.StatusBadRequest)

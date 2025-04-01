@@ -6,10 +6,10 @@ import (
 )
 
 type UserUseCase struct {
-	userRepo domain.UserRepository
+	userRepo domain.IUserRepository
 }
 
-func NewUserUseCase(userRepo domain.UserRepository) *UserUseCase {
+func NewUserUseCase(userRepo domain.IUserRepository) *UserUseCase {
 	return &UserUseCase{
 		userRepo: userRepo,
 	}
@@ -56,7 +56,16 @@ func (u *UserUseCase) GetUserByEmail(email string) (*domain.User, error) {
 }
 
 func (u *UserUseCase) GetAllUsers() ([]*domain.User, error) {
-	return u.userRepo.GetAll()
+	users, err := u.userRepo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*domain.User, len(users))
+	for i := range users {
+		result[i] = &users[i]
+	}
+	return result, nil
 }
 
 func (u *UserUseCase) UpdateUser(user *domain.User) error {

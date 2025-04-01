@@ -11,7 +11,6 @@ type MockUserRepository struct {
 	GetAllFunc     func() ([]*domain.User, error)
 	UpdateFunc     func(*domain.User) error
 	DeleteFunc     func(int64) error
-	CloseFunc      func() error
 }
 
 func (m *MockUserRepository) Create(user *domain.User) error {
@@ -35,9 +34,17 @@ func (m *MockUserRepository) GetByEmail(email string) (*domain.User, error) {
 	return nil, nil
 }
 
-func (m *MockUserRepository) GetAll() ([]*domain.User, error) {
+func (m *MockUserRepository) GetAll() ([]domain.User, error) {
 	if m.GetAllFunc != nil {
-		return m.GetAllFunc()
+		users, err := m.GetAllFunc()
+		if err != nil {
+			return nil, err
+		}
+		result := make([]domain.User, len(users))
+		for i, u := range users {
+			result[i] = *u
+		}
+		return result, nil
 	}
 	return nil, nil
 }
@@ -52,13 +59,6 @@ func (m *MockUserRepository) Update(user *domain.User) error {
 func (m *MockUserRepository) Delete(id int64) error {
 	if m.DeleteFunc != nil {
 		return m.DeleteFunc(id)
-	}
-	return nil
-}
-
-func (m *MockUserRepository) Close() error {
-	if m.CloseFunc != nil {
-		return m.CloseFunc()
 	}
 	return nil
 }

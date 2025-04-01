@@ -2,67 +2,64 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"inventario/internal/infrastructure/repository"
 	"inventario/internal/interface/handler"
 	"inventario/internal/usecase"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/cors"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/go-chi/chi/v5/middleware"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
-	// Initialize database
-	db, err := sql.Open("sqlite3", "products.db")
+	// Initialize MySQL connection
+	db, err := sql.Open("mysql", os.Getenv("MYSQL_DSN"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to connect to MySQL: %v", err)
 	}
 	defer db.Close()
 
-	// Create tables
-	if err := createTables(db); err != nil {
-		log.Fatal(err)
+	// Test the connection
+	if err := db.Ping(); err != nil {
+		log.Fatalf("Failed to ping MySQL: %v", err)
 	}
 
 	// Initialize repositories
-	productRepo, err := repository.NewSQLiteProductRepository("products.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer productRepo.Close()
-
-	userRepo := repository.NewSQLiteUserRepository(db)
+	productRepo := repository.NewMySQLProductRepository(db)
+	userRepo := repository.NewMySQLUserRepository(db)
+	stockRepo := repository.NewMySQLStockRepository(db)
+	providerRepo := repository.NewMySQLProviderRepository(db)
 
 	// Initialize use cases
 	productUseCase := usecase.NewProductUseCase(productRepo)
 	userUseCase := usecase.NewUserUseCase(userRepo)
+	stockUseCase := usecase.NewStockUseCase(stockRepo)
+	providerUseCase := usecase.NewProviderUseCase(providerRepo)
 
 	// Initialize handlers
 	productHandler := handler.NewProductHandler(productUseCase)
 	userHandler := handler.NewUserHandler(userUseCase)
+	stockHandler := handler.NewStockHandler(stockUseCase)
+	providerHandler := handler.NewProviderHandler(providerUseCase)
 
 	// Initialize router
 	r := chi.NewRouter()
 
-	// CORS middleware
-	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-		MaxAge:           300,
-	}))
+	// Middleware
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 
 	// Routes
 	r.Route("/api", func(r chi.Router) {
 		// Product routes
 		r.Route("/products", func(r chi.Router) {
-			r.Get("/", productHandler.GetAllProducts)
 			r.Post("/", productHandler.CreateProduct)
+			r.Get("/", productHandler.GetAllProducts)
 			r.Get("/{id}", productHandler.GetProduct)
 			r.Put("/{id}", productHandler.UpdateProduct)
 			r.Delete("/{id}", productHandler.DeleteProduct)
@@ -70,49 +67,42 @@ func main() {
 
 		// User routes
 		r.Route("/users", func(r chi.Router) {
-			r.Get("/", userHandler.GetAllUsers)
 			r.Post("/", userHandler.CreateUser)
+			r.Get("/", userHandler.GetAllUsers)
 			r.Get("/{id}", userHandler.GetUser)
 			r.Put("/{id}", userHandler.UpdateUser)
 			r.Delete("/{id}", userHandler.DeleteUser)
 		})
+
+		// Stock routes
+		r.Route("/stocks", func(r chi.Router) {
+			r.Post("/", stockHandler.CreateStock)
+			r.Get("/", stockHandler.GetAllStocks)
+			r.Get("/{id}", stockHandler.GetStock)
+			r.Put("/{id}", stockHandler.UpdateStock)
+			r.Delete("/{id}", stockHandler.DeleteStock)
+			r.Get("/product/{productId}", stockHandler.GetStocksByProductID)
+			r.Get("/serial/{serial}", stockHandler.GetStockBySerial)
+		})
+
+		// Provider routes
+		r.Route("/providers", func(r chi.Router) {
+			r.Post("/", providerHandler.CreateProvider)
+			r.Get("/", providerHandler.GetAllProviders)
+			r.Get("/{id}", providerHandler.GetProvider)
+			r.Put("/{id}", providerHandler.UpdateProvider)
+			r.Delete("/{id}", providerHandler.DeleteProvider)
+		})
 	})
 
 	// Start server
-	log.Println("Starting server...")
-	log.Println("Server running on http://localhost:8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func createTables(db *sql.DB) error {
-	// Create products table
-	_, err := db.Exec(`
-		CREATE TABLE IF NOT EXISTS products (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT NOT NULL,
-			code TEXT NOT NULL UNIQUE,
-			image_url TEXT,
-			created_at DATETIME NOT NULL,
-			updated_at DATETIME NOT NULL
-		)
-	`)
-	if err != nil {
-		return err
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
 	}
 
-	// Create users table
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS users (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT NOT NULL,
-			email TEXT NOT NULL UNIQUE,
-			role TEXT NOT NULL,
-			password TEXT NOT NULL,
-			created_at DATETIME NOT NULL,
-			updated_at DATETIME NOT NULL
-		)
-	`)
-	return err
+	log.Printf("Server starting on port %s...", port)
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), r); err != nil {
+		log.Fatalf("Server failed to start: %v", err)
+	}
 }

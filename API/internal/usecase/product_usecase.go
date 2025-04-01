@@ -6,11 +6,11 @@ import (
 
 // ProductUseCase handles the business logic for product operations
 type ProductUseCase struct {
-	productRepo domain.ProductRepository
+	productRepo domain.IProductRepository
 }
 
 // NewProductUseCase creates a new ProductUseCase instance
-func NewProductUseCase(repo domain.ProductRepository) *ProductUseCase {
+func NewProductUseCase(repo domain.IProductRepository) *ProductUseCase {
 	return &ProductUseCase{
 		productRepo: repo,
 	}
@@ -33,7 +33,16 @@ func (uc *ProductUseCase) GetProduct(id int64) (*domain.Product, error) {
 
 // GetAllProducts retrieves all products
 func (uc *ProductUseCase) GetAllProducts() ([]*domain.Product, error) {
-	return uc.productRepo.GetAll()
+	products, err := uc.productRepo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*domain.Product, len(products))
+	for i := range products {
+		result[i] = &products[i]
+	}
+	return result, nil
 }
 
 // UpdateProduct updates an existing product

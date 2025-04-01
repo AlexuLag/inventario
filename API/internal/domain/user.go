@@ -13,15 +13,14 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// UserRepository defines the interface for user persistence operations
-type UserRepository interface {
+// IUserRepository defines the interface for user persistence operations
+type IUserRepository interface {
 	Create(user *User) error
+	GetAll() ([]User, error)
 	GetByID(id int64) (*User, error)
-	GetByEmail(email string) (*User, error)
-	GetAll() ([]*User, error)
 	Update(user *User) error
 	Delete(id int64) error
-	Close() error
+	GetByEmail(email string) (*User, error)
 }
 
 // UserNotFoundError represents an error when a user is not found

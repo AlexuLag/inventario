@@ -1,0 +1,40 @@
+# Archivos de configuración
+*.toml
+*.yaml
+*.yml
+*.json
+
+# Archivos de mocks
+*_mock.go
+
+# Archivos generados
+*.pb.go
+*.gen.go
+
+# Archivos de test
+*_test.go
+
+# Archivos de migración
+migrations/*
+
+# Archivos de documentación
+docs/*
+
+# Archivos de configuración de IDE
+.vscode/
+.idea/
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Implementaciones de repositorio no utilizadas
+internal/infrastructure/repository/mysql_*.go
+internal/infrastructure/repository/sqlite_*.go
+
+# Casos de uso no implementados
+internal/usecase/stock_use_case.go
+internal/usecase/user_use_case.go
+
+# Archivos de dominio
+internal/domain/*.go 

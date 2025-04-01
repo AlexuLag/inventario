@@ -1,6 +1,13 @@
 package domain
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
+
+var (
+	ErrInternalServer = errors.New("internal server error")
+)
 
 // ProductAlreadyExistsError represents an error when a product already exists
 type ProductAlreadyExistsError struct {
