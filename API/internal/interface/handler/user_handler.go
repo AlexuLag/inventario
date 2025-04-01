@@ -21,23 +21,28 @@ func NewUserHandler(userUseCase *usecase.UserUseCase) *UserHandler {
 }
 
 type CreateUserRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Role     string `json:"role"`
-	Password string `json:"password"`
+	Name     string `json:"name" required:"true" min:"1"`
+	Email    string `json:"email" required:"true" min:"1"`
+	Role     string `json:"role" required:"true" min:"1"`
+	Password string `json:"password" required:"true" min:"1"`
 }
 
 type UpdateUserRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Role     string `json:"role"`
-	Password string `json:"password,omitempty"`
+	Name     string `json:"name" required:"true" min:"1"`
+	Email    string `json:"email" required:"true" min:"1"`
+	Role     string `json:"role" required:"true" min:"1"`
+	Password string `json:"password,omitempty" min:"1"`
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var req CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if req.Name == "" || req.Email == "" || req.Role == "" || req.Password == "" {
+		http.Error(w, "Name, email, role and password are required fields", http.StatusBadRequest)
 		return
 	}
 
@@ -102,6 +107,11 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var req UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if req.Name == "" || req.Email == "" || req.Role == "" {
+		http.Error(w, "Name, email and role are required fields", http.StatusBadRequest)
 		return
 	}
 

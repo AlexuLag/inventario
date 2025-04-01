@@ -28,13 +28,9 @@ docs/*
 .DS_Store
 Thumbs.db
 
-# Implementaciones de repositorio no utilizadas
-internal/infrastructure/repository/mysql_*.go
-internal/infrastructure/repository/sqlite_*.go
+# Infraestructura
+internal/infrastructure/repository/*
 
-# Casos de uso no implementados
-internal/usecase/stock_use_case.go
-internal/usecase/user_use_case.go
 
 # Archivos de dominio
 internal/domain/*.go 
